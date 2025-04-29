@@ -1,0 +1,57 @@
+# Test Makefile based on original bftpd Makefile
+VERSION=1.0
+CC=gcc
+CFLAGS=-g -DHAVE_CONFIG_H -Wall -I. -DVERSION=\"$(VERSION)\" -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -Wextra -fprofile-arcs -ftest-coverage
+LDFLAGS=-lcrypt -lcunit -lgcov
+
+# Source files from original bftpd
+SRCS=bftpdutmp.c commands.c commands_admin.c cwd.c dirlist.c list.c login.c logging.c main.c mystring.c options.c md5.c
+OBJS=$(SRCS:.c=.o)
+
+# Test source files
+TEST_SRCS=test_main.c test_common.c
+TEST_OBJS=$(TEST_SRCS:.c=.o)
+
+# All source files
+ALL_SRCS=$(SRCS) $(TEST_SRCS)
+ALL_OBJS=$(OBJS) $(TEST_OBJS)
+
+# Test executable
+TEST_EXE=test_bftpd
+
+# Coverage directories
+COVERAGE_DIR=coverage
+COVERAGE_INFO=coverage.info
+
+# Default target
+all: $(TEST_EXE)
+
+# Build test executable
+$(TEST_EXE): $(ALL_OBJS)
+	$(CC) $(ALL_OBJS) $(LDFLAGS) -o $@
+
+# Compile rules
+%.o: %.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+# Clean target
+clean:
+	rm -f $(TEST_OBJS) $(TEST_EXE) *.o *.d
+	rm -rf $(COVERAGE_DIR)
+	rm -f *.gcda *.gcno
+
+# Test target
+test: $(TEST_EXE)
+	./$(TEST_EXE)
+
+# Run with valgrind
+valgrind: $(TEST_EXE)
+	valgrind --leak-check=full --show-leak-kinds=definite,possible ./$(TEST_EXE)
+
+# Generate coverage report
+coverage: test
+	lcov --capture --directory . --output-file coverage.info
+	lcov --remove coverage.info '/usr/include/*' '/usr/lib/*' '/usr/local/include/*' '/usr/local/lib/*' '*/bits/*' --output-file coverage.info
+	genhtml coverage.info --output-directory coverage
+
+.PHONY: all clean test coverage 
