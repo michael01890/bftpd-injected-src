@@ -16,7 +16,7 @@
 #include <sys/wait.h>
 #include <stdarg.h>
 
-
+int a = 0;
 
 // Global variables
 pid_t server_pid = -1;
