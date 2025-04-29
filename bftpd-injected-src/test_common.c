@@ -16,6 +16,7 @@
 #include <sys/wait.h>
 #include <stdarg.h>
 
+
 // Global variables
 pid_t server_pid = -1;
 int client_socket = -1;
